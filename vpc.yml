@@ -1,0 +1,160 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template created AWS VPC with its components.
+Resources:
+####### VPC #######
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+      - Key: Name
+        Value: Custom-VPC
+ ###### Route Tables - Public & Private ######
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC      #!Ref Logical Name or ID of the resource, this will help you to reference to resources
+      Tags:
+      - Key: Name
+        Value: Public 
+  PrivateRouteTable:
+    DependsOn: InternetGatewayRoute
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC      #!Ref Logical Name or ID of the resource, this will help you to reference to resources
+      Tags:
+      - Key: Name
+        Value: Private
+######## Subnets - Public & Private #######
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "us-west-1a"
+      Tags:
+      - Key: Name
+        Value: PublicSubnet1
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: "us-west-1b"
+      Tags:
+      - Key: Name
+        Value: PublicSubnet2
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: "us-west-1a"
+      Tags:
+      - Key: Name
+        Value: PublicSubnet3
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: "us-west-1a"
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet1
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: "us-west-1b"
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet2
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.13.0/24
+      AvailabilityZone: "us-west-1a"
+      Tags:
+      - Key: Name
+        Value: PrivateSubnet3
+######## Subnets Association to Route Table - Public & Private #######
+  PublicSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnet3Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnet3Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable
+######## Internet Gateway and Internet Gateway Attachment #######
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: InterGateway
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  
+######## Nat Gateway ########
+  NATGateway:
+    DependsOn: PrivateRouteTable
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:      # !Ref returns resource name or resource ID, but 90% !Ref ruturns resource ID
+        Fn::GetAtt:      # !GetAtt helps you to retreive a specific attribute that you want
+        - EIPNatGateway
+        - AllocationId              
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+      - Key: Name
+        Value: NaTGateway
+  EIPNatGateway:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+########### Routes - Net and Internet Gataways ###########
+  InternetGatewayRoute:
+    Type: AWS::EC2::Route
+    Properties:
+       RouteTableId: !Ref PublicRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       GatewayId: !Ref InternetGateway
+  NATGatewayRoute:
+    DependsOn: InternetGatewayRoute
+    Type: AWS::EC2::Route
+    Properties:
+       RouteTableId: !Ref PrivateRouteTable
+       DestinationCidrBlock: 0.0.0.0/0
+       NatGatewayId: !Ref NATGateway

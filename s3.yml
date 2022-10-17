@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template creates S3 bucket
+Resources: 
+  MyFirstS3Bucket:           #logical name or ID, this is a unique identified for a resource that i'm creating
+    Type: "AWS::S3::Bucket" 
+    Properties:  
+      BucketName: aws-session-s3-bucket-automation
+      AccessControl: Private
+      PublicAccessBlockConfiguration: 
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Suspended
+      BucketEncryption:  
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+        
