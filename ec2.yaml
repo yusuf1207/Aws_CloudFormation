@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template creates ec2 instance
+Resources:
+  MyEC2Instance: # Logicalid 
+    Type: "AWS::EC2::Instance"
+    Properties: 
+      ImageId: "ami-09208e69ff3feb1"
+      InstanceType: "t2.micro"
+      SubnetId: "subnet-0c80bc19aa605d6"
+      Tags:
+        - Key: Name
+          Value: MyFirstEC2Instance
+      
+      SecurityGroupIds:
+        - !Ref MySecurityGroup    # Referencing to Resource to grap Security Group ID.
+                                  # Reference is used to provision resources dynamically
+      KeyName: MyMacKey
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: Ec2SecutiryGroup
+      GroupDescription: This is a Security Group for MyFirstEc2Instance
+      VpcId: vpc-033585edc6f00d9fc
+      SecurityGroupIngress:    #Inbound Rule
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:     #Outbound Rule
+      - IpProtocol: "-1"
+        CidrIp: 0.0.0.0/0
